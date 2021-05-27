@@ -17,4 +17,6 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-$router->post('/store-user', 'UserController@store');
+$router->group(['middleware' => 'transaction'], function () use ($router) {
+    $router->post('/transaction', 'TransactionController@performTransaction');
+});
