@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Transaction as TransactionModel;
 use App\Models\User as UserModel;
+use App\Repositories\User;
 use App\Services\HttpService;
 
 class Transaction
@@ -28,7 +29,7 @@ class Transaction
 
         $this->saveTransaction();
 
-        $this->authenticate();
+        $this->notifyReciever();
 
         return true;
     }
@@ -36,14 +37,14 @@ class Transaction
     private function subctractAmountFromPayer()
     {
         $this->payerModel->balance = $this->payerModel->balance - $this->amount;
-        $this->payerModel->save();
+        $this->payerModel->saveOrFail();
         $this->payerModel->refresh();
     }
 
     private function sumAmountToPayee()
     {
         $this->payeeModel->balance = $this->payeeModel->balance + $this->amount;
-        $this->payeeModel->save();
+        $this->payeeModel->saveOrFail();
         $this->payeeModel->refresh();
     }
 
@@ -53,13 +54,14 @@ class Transaction
         $transactionModel->payer_id = $this->payerModel->id;
         $transactionModel->payee_id = $this->payeeModel->id;
         $transactionModel->amount   = $this->amount;
-        $transactionModel->save();
+        $transactionModel->saveOrFail();
         $transactionModel->refresh();
     }
 
-    private function authenticate()
+    private function notifyReciever()
     {
-        
+        $user = new User();
+        $user->sendEmailToUser($this->payeeModel);
     }
 
     public function validateTransaction()
@@ -75,7 +77,12 @@ class Transaction
         }
 
         if ($this->hasNotEnoughBalance()) {
-            $this->setErrorMessage('Você não tem saldo suficiente para realizar a transferência!');
+            $this->setErrorMessage('Você não possui saldo suficiente para realizar a transferência!');
+            return false;
+        }
+
+        if ($this->authorization()) {
+            $this->setErrorMessage('Transação não autorizada!');
             return false;
         }
 
@@ -106,6 +113,17 @@ class Transaction
             return true;
         }
         return false;
+    }
+
+    private function authorization()
+    {
+        $authResponse = HttpService::request(
+            'GET',
+            'https://run.mocky.io/v3/8fafdd68-a090-496f-8c9a-3442cf30dae6'
+        );
+        if ($authResponse == false || $authResponse->message != 'Autorizado') {
+            return false;
+        }
     }
 
     private function setErrorMessage($message)
