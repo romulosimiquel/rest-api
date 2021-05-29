@@ -29,8 +29,6 @@ class Transaction
 
         $this->saveTransaction();
 
-        $this->notifyReciever();
-
         return true;
     }
 
@@ -58,10 +56,14 @@ class Transaction
         $transactionModel->refresh();
     }
 
-    private function notifyReciever()
+    public function notifyReciever()
     {
         $user = new User();
-        $user->sendEmailToUser($this->payeeModel);
+        $emailResponse = $user->sendEmailToUser($this->payeeModel);
+        if ($emailResponse == false || $emailResponse->message != 'Success') {
+            $this->setErrorMessage('Não foi possível notificar o recebedor!');
+            return false;
+        }
     }
 
     public function validateTransaction()
@@ -81,8 +83,8 @@ class Transaction
             return false;
         }
 
-        if ($this->authorization()) {
-            $this->setErrorMessage('Transação não autorizada!');
+        if ($this->transactionAuthorization()) {
+            $this->setErrorMessage('Transferência não autorizada!');
             return false;
         }
 
@@ -115,7 +117,7 @@ class Transaction
         return false;
     }
 
-    private function authorization()
+    private function transactionAuthorization()
     {
         $authResponse = HttpService::request(
             'GET',

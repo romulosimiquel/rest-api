@@ -9,7 +9,6 @@ class User
 {
     public function sendEmailToUser(UserModel $user)
     {
-        $emailResponse = HttpService::request('GET', 'http://o4d9z.mocklab.io/notify', ['userEmail' => $user->email]);
-        dd($emailResponse);
+        return HttpService::request('GET', 'http://o4d9z.mocklab.io/notify', ['userEmail' => $user->email]);
     }
 }

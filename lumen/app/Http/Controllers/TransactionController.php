@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 use App\Repositories\Transaction;
+use App\Validation\Messages;
 use Illuminate\Http\Request;
+use App\Validation\Rules;
 
 class TransactionController extends Controller
 {
@@ -21,9 +22,9 @@ class TransactionController extends Controller
             $transaction->validateTransaction();
 
             if ($transaction->validateTransaction()) {
-                $transactionResponse = $transaction->makeTransaction();
-                
-                if ($transactionResponse) {
+                $transaction->makeTransaction();
+
+                if ($transaction->notifyReciever()) {
                     return response()->json('Transferência realizada com sucesso!', 200);
                 }
             }
@@ -35,17 +36,6 @@ class TransactionController extends Controller
 
     private function validated($request)
     {
-        $rules = [
-            'amount' => 'required|integer|min:1',
-            'payer_id' => 'required|integer',
-            'payee_id' => 'required|integer'
-        ];
-        $messages = [
-            'amount.required' => 'O valor da transferencia deve ser informado',
-            'amount.min' => 'O valor deve ser maior ou igual a 1',
-            'payer_id.required' => 'O pagante deve ser informado',
-            'payee_id.required' => 'O recebedor deve ser informado'
-        ];
-        return Validator::make($request->all(), $rules, $messages);
+        return Validator::make($request->all(), Rules::transactionRules(), Messages::transactionMessages());
     }
 }
