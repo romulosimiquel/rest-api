@@ -9,10 +9,11 @@ use App\Services\HttpService;
 
 class Transaction
 {
+    private $transactionModel;
     private $payerModel;
     private $payeeModel;
-    private $amount;
     private $errorMessage;
+    private $amount;
 
     public function __construct($transactionRequest)
     {
@@ -23,7 +24,7 @@ class Transaction
 
     public function makeTransaction()
     {
-        $this->subctractAmountFromPayer();
+        $this->subtractAmountFromPayer();
 
         $this->sumAmountToPayee();
 
@@ -32,7 +33,7 @@ class Transaction
         return true;
     }
 
-    private function subctractAmountFromPayer()
+    private function subtractAmountFromPayer()
     {
         $this->payerModel->balance = $this->payerModel->balance - $this->amount;
         $this->payerModel->saveOrFail();
@@ -54,6 +55,17 @@ class Transaction
         $transactionModel->amount   = $this->amount;
         $transactionModel->saveOrFail();
         $transactionModel->refresh();
+        $this->setTransactionModel($transactionModel);
+    }
+
+    private function setTransactionModel($transactionModel)
+    {
+        $this->transactionModel = $transactionModel;
+    }
+
+    public function getTransactionModel()
+    {
+        return $this->transactionModel;
     }
 
     public function notifyReciever()
@@ -64,6 +76,7 @@ class Transaction
             $this->setErrorMessage('Não foi possível notificar o recebedor!');
             return false;
         }
+        return true;
     }
 
     public function validateTransaction()

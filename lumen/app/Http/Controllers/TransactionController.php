@@ -15,22 +15,27 @@ class TransactionController extends Controller
         try {
             $validator = $this->validated($request);
             if ($validator->fails()) {
-                return response()->json([$validator->errors()], 422);
+                return response()->json(['errors' => $validator->errors()], 422);
             }
 
             $transaction = new Transaction($request);
-            $transaction->validateTransaction();
+            $validTransaction = $transaction->validateTransaction();
 
-            if ($transaction->validateTransaction()) {
+            if ($validTransaction) {
                 $transaction->makeTransaction();
-
                 if ($transaction->notifyReciever()) {
-                    return response()->json('Transferência realizada com sucesso!', 200);
+                    return response()->json(
+                        [
+                            'message' => 'Transferência realizada com sucesso!',
+                            'data' => $transaction->getTransactionModel()
+                        ],
+                        200
+                    );
                 }
             }
-            return response()->json($transaction->getErrorMessage(), 500);
+            return response()->json(['error' => $transaction->getErrorMessage()], 500);
         } catch (\Throwable $th) {
-            return response()->json('Não foi possível realizar a transferência', 500);
+            return response()->json(['error' => $th->getMessage()], 500);
         }
     }
 
