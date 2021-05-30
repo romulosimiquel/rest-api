@@ -24,16 +24,9 @@ _Simula uma transferência de valores entre dois usuários retornando as inform�
 
   payee_id=[integer]
   
-  * **Resposta de sucesso:**
+* **Resposta de sucesso:**
  
   * **Codigo:** 200 <br />
-    **Conteúdo:** `{'Transação realizada com sucesso!'}`
-    
-* **Mensagens de erro:**
-
-  * **Codigo:** 401 UNAUTHORIZED <br />
-    **Conteúdo:** `{ error : "Log in" }`
-
-  * **Codigo:** 422 UNPROCESSABLE ENTRY <br />
-    **Conteúdo:** `{ error : "Email Invalid" }`
-    
+    **Conteúdo:** <br />
+`{message: "Transação realizada com sucesso!", data: { id: 10, amount: 100, payer_id: 1, payee_id:2 }}`
+   
