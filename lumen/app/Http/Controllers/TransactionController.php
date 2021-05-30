@@ -23,19 +23,18 @@ class TransactionController extends Controller
 
             if ($validTransaction) {
                 $transaction->makeTransaction();
-                if ($transaction->notifyReciever()) {
-                    return response()->json(
-                        [
-                            'message' => 'Transferência realizada com sucesso!',
-                            'data' => $transaction->getTransactionModel()
-                        ],
-                        200
-                    );
-                }
+                $transaction->notifyPayee();
+
+                return response()->json(
+                    [
+                        'message' => 'Transferência realizada com sucesso!',
+                        'data' => $transaction->getTransactionModel()
+                    ],
+                    200
+                );
             }
-            return response()->json(['error' => $transaction->getErrorMessage()], 500);
         } catch (\Throwable $th) {
-            return response()->json(['error' => $th->getMessage()], 500);
+            return response()->json(['error' => $th->getMessage()], $th->getCode());
         }
     }
 

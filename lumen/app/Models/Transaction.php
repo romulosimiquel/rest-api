@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
@@ -14,6 +13,10 @@ class Transaction extends Model
      */
     protected $fillable = [
         'amount', 'payer_id', 'payee_id'
+    ];
+
+    protected $hidden = [
+        'created_at', 'updated_at'
     ];
 
     protected $table = 'transaction';

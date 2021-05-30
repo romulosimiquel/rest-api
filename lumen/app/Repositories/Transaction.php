@@ -3,16 +3,15 @@
 namespace App\Repositories;
 
 use App\Models\Transaction as TransactionModel;
+use App\Repositories\TransactionValidation;
 use App\Models\User as UserModel;
 use App\Repositories\User;
-use App\Services\HttpService;
 
 class Transaction
 {
     private $transactionModel;
     private $payerModel;
     private $payeeModel;
-    private $errorMessage;
     private $amount;
 
     public function __construct($transactionRequest)
@@ -20,6 +19,16 @@ class Transaction
         $this->payerModel = $this->getPayerModel($transactionRequest->payer_id);
         $this->payeeModel = $this->getPayeeModel($transactionRequest->payee_id);
         $this->amount     = $transactionRequest->amount;
+    }
+
+    public function validateTransaction()
+    {
+        $validation = new TransactionValidation(
+            $this->payerModel,
+            $this->payeeModel,
+            $this->amount
+        );
+        return $validation->validateTransaction();
     }
 
     public function makeTransaction()
@@ -68,86 +77,31 @@ class Transaction
         return $this->transactionModel;
     }
 
-    public function notifyReciever()
+    public function notifyPayee()
     {
         $user = new User();
         $emailResponse = $user->sendEmailToUser($this->payeeModel);
         if ($emailResponse == false || $emailResponse->message != 'Success') {
-            $this->setErrorMessage('Não foi possível notificar o recebedor!');
-            return false;
+            throw new \Exception('Não foi possível notificar o recebedor!', 500);
         }
-        return true;
-    }
-
-    public function validateTransaction()
-    {
-        if ($this->isSellerUser()) {
-            $this->setErrorMessage('Vendedores não podem realizar transferência!');
-            return false;
-        }
-
-        if ($this->payerModel->id === $this->payeeModel->id) {
-            $this->setErrorMessage('Você não pode realizar uma transferência para si mesmo!');
-            return false;
-        }
-
-        if ($this->hasNotEnoughBalance()) {
-            $this->setErrorMessage('Você não possui saldo suficiente para realizar a transferência!');
-            return false;
-        }
-
-        if ($this->transactionAuthorization()) {
-            $this->setErrorMessage('Transferência não autorizada!');
-            return false;
-        }
-
         return true;
     }
 
     private function getPayerModel($payer_id)
     {
-        return UserModel::findOrFail($payer_id);
+        $userModel = UserModel::find($payer_id);
+        if ($userModel) {
+            return $userModel;
+        }
+        throw new \Exception('Pagante não existe!', 404);
     }
 
     private function getPayeeModel($payee_id)
     {
-        return UserModel::findOrFail($payee_id);
-    }
-
-    private function isSellerUser()
-    {
-        if ($this->payerModel->user_type_id == 2) {
-            return true;
+        $userModel = UserModel::find($payee_id);
+        if ($userModel) {
+            return $userModel;
         }
-        return false;
-    }
-
-    private function hasNotEnoughBalance()
-    {
-        if ($this->payerModel->balance < $this->amount) {
-            return true;
-        }
-        return false;
-    }
-
-    private function transactionAuthorization()
-    {
-        $authResponse = HttpService::request(
-            'GET',
-            'https://run.mocky.io/v3/8fafdd68-a090-496f-8c9a-3442cf30dae6'
-        );
-        if ($authResponse == false || $authResponse->message != 'Autorizado') {
-            return false;
-        }
-    }
-
-    private function setErrorMessage($message)
-    {
-        $this->errorMessage = $message;
-    }
-
-    public function getErrorMessage()
-    {
-        return $this->errorMessage;
+        throw new \Exception('Recebedor não existe!', 404);
     }
 }
