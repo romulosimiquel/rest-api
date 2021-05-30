@@ -20,7 +20,7 @@ class CreateUserTable extends Migration
             $table->string('email')->unique();
             $table->string('cpf')->unique();
             $table->string('password');
-            $table->float('balance');
+            $table->integer('balance');
             $table->unsignedBigInteger('user_type_id');
             $table->foreign('user_type_id')->references('id')->on('user_type');
             $table->timestamps();
@@ -36,11 +36,11 @@ class CreateUserTable extends Migration
                 'created_at' => \Carbon\Carbon::now()
             ],
             [
-                'name' => 'Usuario Comum 1',
+                'name' => 'Usuario Comum 2',
                 'email' => 'email@comum2.com',
                 'cpf' => '28938083012',
                 'password' => '8d23cf6c86e834a7aa6eded54c26ce2bb2e74903538c61bdd5d2197997ab2f72',
-                'balance' => 2.25,
+                'balance' => 2,
                 'user_type_id' => 1,
                 'created_at' => \Carbon\Carbon::now()
             ],

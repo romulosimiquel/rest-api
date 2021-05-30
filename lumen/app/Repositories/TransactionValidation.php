@@ -23,30 +23,26 @@ class TransactionValidation
 
     public function validateTransaction()
     {
-        if ($this->isSellerUser()) {
+        if ($this->isPayerSellerUser()) {
             throw new \Exception('Vendedores não podem realizar transferência!', 401);
-            return false;
         }
 
         if ($this->payerModel->id === $this->payeeModel->id) {
             throw new \Exception('Você não pode realizar uma transferência para si mesmo!', 401);
-            return false;
         }
 
         if ($this->hasNotEnoughBalance()) {
             throw new \Exception('Você não possui saldo suficiente para realizar a transferência!', 401);
-            return false;
         }
 
         if ($this->transactionAuthorization()) {
             throw new \Exception('Transferência não autorizada!', 401);
-            return false;
         }
 
         return true;
     }
 
-    private function isSellerUser()
+    private function isPayerSellerUser()
     {
         if ($this->payerModel->user_type_id == 2) {
             return true;
